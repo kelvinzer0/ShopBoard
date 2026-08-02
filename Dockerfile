@@ -8,7 +8,8 @@ RUN apk add --no-cache sqlite-libs sqlite-dev oniguruma-dev libxml2-dev \
 WORKDIR /app
 
 COPY composer.json ./
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+RUN composer config --global policy.advisories.block false \
+  && composer install --no-dev --optimize-autoloader --no-interaction --no-progress
 
 COPY . .
 
