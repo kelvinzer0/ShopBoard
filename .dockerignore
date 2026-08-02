@@ -1,0 +1,10 @@
+.git
+.gitignore
+.github
+node_modules
+vendor
+storage/logs/*
+*.md
+.env*
+.env.example
+nfpm.yml
