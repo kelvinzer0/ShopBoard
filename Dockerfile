@@ -8,9 +8,9 @@ RUN npm run build
 
 FROM php:8.3-alpine
 
-RUN apk add --no-cache oniguruma-dev libxml2-dev \
+RUN apk add --no-cache sqlite-libs sqlite-dev oniguruma-dev libxml2-dev \
   && docker-php-ext-install pdo_sqlite mbstring xml \
-  && apk del oniguruma-dev libxml2-dev \
+  && apk del sqlite-dev oniguruma-dev libxml2-dev \
   && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 WORKDIR /app
