@@ -7,13 +7,12 @@ RUN apk add --no-cache sqlite-libs sqlite-dev oniguruma-dev libxml2-dev \
 
 WORKDIR /app
 
-COPY composer.json ./
-RUN composer config --global policy.advisories.block false \
-  && composer install --no-dev --optimize-autoloader --no-interaction --no-progress
-
 COPY . .
 
-RUN touch database/database.sqlite \
+RUN composer config --global policy.advisories.block false \
+  && composer install --no-dev --optimize-autoloader --no-interaction --no-progress --no-scripts \
+  && composer run post-autoload-dump \
+  && touch database/database.sqlite \
   && php artisan key:generate --force \
   && php artisan migrate --force
 
