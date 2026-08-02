@@ -12,6 +12,7 @@ COPY . .
 RUN composer config --global policy.advisories.block false \
   && composer install --no-dev --optimize-autoloader --no-interaction --no-progress --no-scripts \
   && composer run post-autoload-dump \
+  && cp .env.example .env \
   && touch database/database.sqlite \
   && php artisan key:generate --force \
   && php artisan migrate --force
