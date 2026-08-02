@@ -3,7 +3,8 @@ FROM node:22-alpine AS frontend
 WORKDIR /app
 COPY package.json ./
 RUN npm install
-COPY resources/ vite.config.js tailwind.config.js postcss.config.js ./
+COPY resources/ ./resources/
+COPY vite.config.js tailwind.config.js postcss.config.js ./
 RUN npm run build
 
 FROM php:8.3-alpine
