@@ -33,14 +33,14 @@ jobs:
       - name: Smoke test
         run: |
           docker run -d --name shopboard-test -p 8000:8000 \
-            -e APP_DEBUG=true shopboard-ci:latest
+            -e APP_DEBUG=true \
+            -e LOG_CHANNEL=stderr shopboard-ci:latest
           sleep 4
-          STATUS=$(curl -s -o /tmp/resp.html -w '%{http_code}' http://localhost:8000)
+          STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000)
           echo "HTTP: $STATUS"
           if [ "$STATUS" != "200" ]; then
-            echo "=== Error ==="
-            grep -oP '(?<=<title>)[^<]+' /tmp/resp.html
-            docker exec shopboard-test cat storage/logs/laravel.log 2>/dev/null | tail -30
+            echo "=== Docker Logs ==="
+            docker logs shopboard-test 2>&1 | tail -50
           fi
           docker stop shopboard-test
           [ "$STATUS" = "200" ]
