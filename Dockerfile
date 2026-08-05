@@ -25,7 +25,8 @@ RUN composer config --global policy.advisories.block false \
 COPY . .
 COPY --from=frontend /app/public/build public/build
 
-RUN composer run post-autoload-dump \
+RUN composer dump-autoload -o \
+  && composer run post-autoload-dump \
   && cp .env.example .env \
   && touch database/database.sqlite \
   && mkdir -p storage/framework/{sessions,cache,views} storage/logs \
