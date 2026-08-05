@@ -39,9 +39,8 @@ jobs:
           STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000)
           echo "HTTP: $STATUS"
           if [ "$STATUS" != "200" ]; then
-            echo "=== Error ==="
-            grep -oP '(?<=<title>)[^<]+' /tmp/resp.html || true
-            grep -oP 'break-words[^>]*>[^<]{1,500}' /tmp/resp.html | sed 's/<[^>]*>//g' | head -5 || true
+            echo "=== Raw Exception (last 3kb) ==="
+            tail -c 3000 /tmp/resp.html | strings | grep -iE 'exception|error|not found|undefined|class.*\\' | head -10
           fi
           docker stop shopboard-test
           [ "$STATUS" = "200" ]
