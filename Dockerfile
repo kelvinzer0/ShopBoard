@@ -1,3 +1,14 @@
+# Stage 1: Build frontend assets
+FROM node:22-alpine AS frontend
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY resources/ vite.config.js tailwind.config.js postcss.config.js ./
+COPY resources/css/app.css resources/css/
+COPY resources/js/ resources/js/
+RUN npm run build
+
+# Stage 2: PHP application
 FROM php:8.3-alpine
 
 RUN apk add --no-cache sqlite-libs sqlite-dev oniguruma-dev libxml2-dev \
@@ -7,11 +18,14 @@ RUN apk add --no-cache sqlite-libs sqlite-dev oniguruma-dev libxml2-dev \
 
 WORKDIR /app
 
-COPY . .
-
+COPY composer.json ./
 RUN composer config --global policy.advisories.block false \
-  && composer install --no-dev --optimize-autoloader --no-interaction --no-progress --no-scripts \
-  && composer run post-autoload-dump \
+  && composer install --no-dev --optimize-autoloader --no-interaction --no-progress --no-scripts
+
+COPY . .
+COPY --from=frontend /app/public/build public/build
+
+RUN composer run post-autoload-dump \
   && cp .env.example .env \
   && touch database/database.sqlite \
   && php artisan key:generate --force \
