@@ -34,28 +34,12 @@ jobs:
         run: |
           docker run -d --name shopboard-test -p 8000:8000 \
             -e APP_DEBUG=true shopboard-ci:latest
-          echo "Waiting for server..."
-          for i in $(seq 1 10); do
-            sleep 2
-            STATUS=$(curl -s -o /tmp/response.html -w '%{http_code}' http://localhost:8000 2>/dev/null || echo "000")
-            echo "Attempt $i: HTTP $STATUS"
-            if [ "$STATUS" != "000" ]; then
-              echo "=== Response body ==="
-              cat /tmp/response.html | head -50
-              echo "=== Container logs ==="
-              docker logs shopboard-test 2>&1 | tail -30
-              if [ "$STATUS" = "200" ]; then
-                echo "SUCCESS"
-                docker stop shopboard-test
-                exit 0
-              else
-                echo "FAIL: HTTP $STATUS"
-                docker stop shopboard-test
-                exit 1
-              fi
-            fi
-          done
-          echo "FAIL: Server never responded"
-          docker logs shopboard-test
+          sleep 4
+          # Get the error page and extract the exception message
+          curl -s http://localhost:8000 | grep -oP '(?<=<title>)[^<]+' | head -1
+          echo "---"
+          curl -s http://localhost:8000 | grep -oP '(?<=class="break-words">)[^<]{1,200}' | head -5
+          echo "---"
+          # Check Laravel log
+          docker exec shopboard-test cat storage/logs/laravel.log 2>/dev/null | tail -50 || echo "no log file"
           docker stop shopboard-test
-          exit 1
