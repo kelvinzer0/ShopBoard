@@ -1,0 +1,17 @@
+services:
+  app:
+    image: ghcr.io/kelvinzer0/shopboard:latest
+    container_name: shopboard
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    volumes:
+      - shopboard-data:/app/database
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+      - APP_DEBUG=${APP_DEBUG:-false}
+      - APP_URL=${APP_URL:-http://localhost:${APP_PORT:-8000}}
+
+volumes:
+  shopboard-data:
+    driver: local

@@ -16,26 +16,22 @@ docker run -d --name shopboard -p 8000:8000 -v shopboard-data:/app/database ghcr
 
 Open `http://localhost:8000`
 
-### With docker compose
-
-```yaml
-services:
-  shopboard:
-    image: ghcr.io/kelvinzer0/shopboard:latest
-    ports:
-      - "8000:8000"
-    volumes:
-      - shopboard-data:/app/database
-
-volumes:
-  shopboard-data:
-```
+### With Docker Compose (Recommended)
 
 ```bash
+git clone https://github.com/kelvinzer0/ShopBoard.git
+cd ShopBoard
+
+# Optional: customize port and env
+cp .env.docker.example .env
+
+# Start
 docker compose up -d
 ```
 
-> Data persisted via volume. Multi-arch: amd64 + arm64.
+Open `http://localhost:8000`
+
+> Data persisted via named volume. Multi-arch: amd64 + arm64.
 
 ## Manual Setup
 
