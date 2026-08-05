@@ -30,17 +30,25 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Pre-flight checks
+        run: |
+          docker run --rm shopboard-ci:latest php artisan route:list 2>&1 | head -20
+          echo '---'
+          docker run --rm -e APP_DEBUG=true shopboard-ci:latest php artisan about 2>&1 | head -20
+
       - name: Smoke test
         run: |
-          docker run -d --name shopboard-test -p 8000:8000 \
-            -e APP_DEBUG=true shopboard-ci:latest
-          sleep 4
-          curl -s http://localhost:8000 > /tmp/resp.html
-          STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000)
-          echo "HTTP: $STATUS"
-          if [ "$STATUS" != "200" ]; then
-            echo "=== Raw Exception (last 3kb) ==="
-            tail -c 3000 /tmp/resp.html | strings | grep -iE 'exception|error|not found|undefined|class.*\\' | head -10
-          fi
+          docker run -d --name shopboard-test -p 8000:8000 shopboard-ci:latest
+          for i in $(seq 1 10); do
+            sleep 2
+            STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000 2>/dev/null || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "ShopBoard is up! HTTP $STATUS"
+              docker stop shopboard-test
+              exit 0
+            fi
+          done
+          echo "FAIL: HTTP $(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000)"
+          docker logs shopboard-test
           docker stop shopboard-test
-          [ "$STATUS" = "200" ]
+          exit 1
