@@ -32,20 +32,30 @@ jobs:
 
       - name: Smoke test
         run: |
-          docker run -d --name shopboard-test -p 8000:8000 shopboard-ci:latest
+          docker run -d --name shopboard-test -p 8000:8000 \
+            -e APP_DEBUG=true shopboard-ci:latest
           echo "Waiting for server..."
-          for i in $(seq 1 15); do
-            STATUS=$(curl -s -o /tmp/response.html -w '%{http_code}' http://localhost:8000 2>/dev/null || echo "000")
-            if [ "$STATUS" = "200" ]; then
-              echo "Server is up! HTTP $STATUS"
-              head -c 200 /tmp/response.html
-              docker stop shopboard-test
-              exit 0
-            fi
-            echo "Attempt $i: HTTP $STATUS - retrying in 2s..."
+          for i in $(seq 1 10); do
             sleep 2
+            STATUS=$(curl -s -o /tmp/response.html -w '%{http_code}' http://localhost:8000 2>/dev/null || echo "000")
+            echo "Attempt $i: HTTP $STATUS"
+            if [ "$STATUS" != "000" ]; then
+              echo "=== Response body ==="
+              cat /tmp/response.html | head -50
+              echo "=== Container logs ==="
+              docker logs shopboard-test 2>&1 | tail -30
+              if [ "$STATUS" = "200" ]; then
+                echo "SUCCESS"
+                docker stop shopboard-test
+                exit 0
+              else
+                echo "FAIL: HTTP $STATUS"
+                docker stop shopboard-test
+                exit 1
+              fi
+            fi
           done
-          echo "FAIL: Server did not respond with 200 after 30s"
+          echo "FAIL: Server never responded"
           docker logs shopboard-test
           docker stop shopboard-test
           exit 1
