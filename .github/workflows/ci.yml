@@ -35,17 +35,13 @@ jobs:
           docker run -d --name shopboard-test -p 8000:8000 \
             -e APP_DEBUG=true shopboard-ci:latest
           sleep 4
-          curl -s http://localhost:8000 | \
-            python3 -c "
-import sys, re, html
-for line in sys.stdin:
-    m = re.search(r'break-words[^>]*>(.+?)</', line)
-    if m:
-        print(html.unescape(re.sub(r'<[^>]+>', '', m.group(1))))
-" > /tmp/error.txt 2>/dev/null || true
-          echo "=== Exception ==="
-          head -5 /tmp/error.txt || echo '(no match)'
+          curl -s http://localhost:8000 > /tmp/resp.html
           STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000)
           echo "HTTP: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "=== Error ==="
+            grep -oP '(?<=<title>)[^<]+' /tmp/resp.html || true
+            grep -oP 'break-words[^>]*>[^<]{1,500}' /tmp/resp.html | sed 's/<[^>]*>//g' | head -5 || true
+          fi
           docker stop shopboard-test
           [ "$STATUS" = "200" ]
