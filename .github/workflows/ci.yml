@@ -9,7 +9,7 @@ on:
 
 jobs:
   docker-build:
-    name: Docker Build Test
+    name: Docker Build & Smoke Test
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -30,7 +30,29 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Smoke test temporarily disabled — needs deeper investigation
-      # on TrustProxies / Vite asset URL in Docker network
-      - name: Build passes
-        run: echo 'Docker image built successfully'
+      - name: Smoke test
+        run: |
+          docker run -d --name shopboard-test -p 8000:8000 \
+            -e APP_ENV=production \
+            -e APP_DEBUG=false \
+            -e SESSION_DRIVER=file \
+            -e DB_CONNECTION=sqlite \
+            shopboard-ci:latest
+          sleep 5
+          # Check container is running
+          docker ps | grep shopboard-test
+          # Check HTTP response
+          HTTP_CODE=$(curl -s -o /tmp/response.html -w '%{http_code}' http://localhost:8000 || true)
+          echo "HTTP status: $HTTP_CODE"
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "Smoke test PASSED"
+          else
+            echo "--- Response body (first 2000 chars) ---"
+            head -c 2000 /tmp/response.html
+            echo ""
+            echo "--- Container logs ---"
+            docker logs shopboard-test 2>&1 | tail -30
+            echo "Smoke test FAILED with HTTP $HTTP_CODE"
+            exit 1
+          fi
+          docker stop shopboard-test || true
