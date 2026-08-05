@@ -33,14 +33,19 @@ jobs:
       - name: Smoke test
         run: |
           docker run -d --name shopboard-test -p 8000:8000 \
-            -e APP_DEBUG=true \
-            -e LOG_CHANNEL=stderr shopboard-ci:latest
+            -e APP_DEBUG=true shopboard-ci:latest
           sleep 4
+          curl -s http://localhost:8000 | \
+            python3 -c "
+import sys, re, html
+for line in sys.stdin:
+    m = re.search(r'break-words[^>]*>(.+?)</', line)
+    if m:
+        print(html.unescape(re.sub(r'<[^>]+>', '', m.group(1))))
+" > /tmp/error.txt 2>/dev/null || true
+          echo "=== Exception ==="
+          head -5 /tmp/error.txt || echo '(no match)'
           STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000)
           echo "HTTP: $STATUS"
-          if [ "$STATUS" != "200" ]; then
-            echo "=== Docker Logs ==="
-            docker logs shopboard-test 2>&1 | tail -50
-          fi
           docker stop shopboard-test
           [ "$STATUS" = "200" ]
