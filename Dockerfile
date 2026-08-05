@@ -30,11 +30,12 @@ RUN composer run post-autoload-dump \
   && touch database/database.sqlite \
   && mkdir -p storage/framework/{sessions,cache,views} storage/logs \
   && php artisan key:generate --force \
-  && php artisan migrate --force \
-  && php artisan config:cache \
-  && php artisan route:cache \
-  && php artisan view:cache
+  && php artisan migrate --force
+
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 8000
 
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["php", "artisan", "serve", "host=0.0.0.0", "--port=8000"]
