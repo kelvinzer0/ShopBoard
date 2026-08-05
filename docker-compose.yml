@@ -8,9 +8,13 @@ services:
     volumes:
       - shopboard-data:/app/database
     environment:
+      - APP_NAME=${APP_NAME:-ShopBoard}
       - APP_ENV=${APP_ENV:-production}
       - APP_DEBUG=${APP_DEBUG:-false}
       - APP_URL=${APP_URL:-http://localhost:${APP_PORT:-8000}}
+      - SESSION_DRIVER=${SESSION_DRIVER:-file}
+      - SESSION_LIFETIME=${SESSION_LIFETIME:-120}
+      - DB_CONNECTION=${DB_CONNECTION:-sqlite}
 
 volumes:
   shopboard-data:
