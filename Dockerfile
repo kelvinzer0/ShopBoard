@@ -28,8 +28,12 @@ COPY --from=frontend /app/public/build public/build
 RUN composer run post-autoload-dump \
   && cp .env.example .env \
   && touch database/database.sqlite \
+  && mkdir -p storage/framework/{sessions,cache,views} storage/logs \
   && php artisan key:generate --force \
-  && php artisan migrate --force
+  && php artisan migrate --force \
+  && php artisan config:cache \
+  && php artisan route:cache \
+  && php artisan view:cache
 
 EXPOSE 8000
 
